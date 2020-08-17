@@ -1,0 +1,32 @@
+---
+title: "Homework Two"
+author: "Nate Reynolds"
+date: "8/10/2020"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+```
+
+## Loading Data
+
+Load dataset (Italy Covid Survey) as per Homework One code.
+
+```{r load}
+myData_covid <- read.delim("covid-responses.tab", sep = "\t", header=T)
+```
+
+## Describing the Data
+
+Preview the dataset, display the column names and dimensions.
+
+```{r describe}
+head(myData_covid)
+colnames(myData_covid)
+dim(myData_covid)
+```
+
+This dataset contains survey responses to the survey *Evaluating COVID-19 Public Health Messaging in Italy: Self-Reported Compliance and Growing Mental Health Concerns*. The dataset contains 3,460 rows, representing 3,460 respondents who participated in the survey. The 80 columns in the dataset represent individual survey questions, with the exception of some variables for metadata such respondents' location, date of survey completion, and placement in either a treatment or control group. Individual cell values represent each respondent's answer to each survey question (or said metadata values). The codebook available on Google Classroom provides the full wording of each question and its available answers.

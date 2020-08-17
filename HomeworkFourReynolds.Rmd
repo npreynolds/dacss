@@ -1,0 +1,78 @@
+---
+title: "Homework Four"
+author: "Nate Reynolds"
+date: "8/14/2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+```
+
+## Loading Data
+
+Load dataset (Italy Covid Survey).
+
+```{r load}
+covid <- read.delim("covid-responses.tab", sep = "\t", header=T)
+```
+
+## Renaming Variables
+
+Before describing the variables, I rename them for clarity:
+
+* "selfreport_handwash" is the respondent's self assessment from 0-100 to "I washed my hands more frequently than last month", 0 meaning it does not at apply all (hand washing unaffected), 100 meaning it applies very much (much more hand washing).
+* "UK_antihandshake" is the respondent's answer to "How many of 100 people in the UK do you think believe that one should not shake other people's hands because of the coronavirus right now?"
+
+```{r rename}
+#For clarity, rename variables
+covid <- covid %>%
+  rename(selfreport_handwash = SelfReported_Behavio_3,
+         UK_antihandshake = SOB_2)
+```
+
+## Describing Variables
+
+Creating histograms and finding the mean and median of these two variables.
+
+```{r desrcribe}
+#histogram: selfreport_handwash
+covid %>%
+  ggplot(aes(selfreport_handwash)) +
+  geom_histogram()
+#histogram: UK_antihandshake
+covid %>%
+  ggplot(aes(UK_antihandshake)) +
+  geom_histogram()
+#calculate mean
+covid %>%
+  select(selfreport_handwash, UK_antihandshake) %>%
+  summarize_all(mean, na.rm = TRUE) 
+#calculate median
+covid %>%
+  select(selfreport_handwash, UK_antihandshake) %>%
+  summarize_all(median, na.rm = TRUE) 
+```
+
+The histograms and average statistics show that both variables skew high (towards 100), meaning that respondents tended to be washing their hands more and assumed that the British were shaking hands less. The distribution for "UK_antihandshake" is less drastic, with a median of 85. while the majority of "selfreport_handwash" values are 100, delivering a median of 100. This means that almost all Italians were washing their hands more, and most Italians assumed that the British were shaking hands less.
+
+Given that both distributions skew towards 100, at this point I hypothesize that the correlation must be positive. (If it was negative, there would be far more lower values in one graph; the histograms would not look so similar). Both questions skew towards good hygiene; testing the correlation will show to what extent sanitary Italians have sanitary expectations of the British. Based on the data thus far, these variables probably have a positive relationship. (Conceivably there could be a negative relationship; highly covid-dutiful Italians might self-righteously assume that the UK isn't taking precautions as seriously.... but the data doesn't seem to indicate that; too many respondents answered with high values to both questions).
+
+## Describing the Relationship
+
+Three tests of the relationship: correlation, scatterplot, and linear model:
+
+```{r cor}
+#correlation
+cor(covid$UK_antihandshake, covid$selfreport_handwash, use = "complete.obs")
+#scatterplot
+ggplot(covid, aes(UK_antihandshake, selfreport_handwash)) + 
+  geom_point() +
+  geom_smooth(method = "lm")
+#linear model
+summary(lm(covid$UK_antihandshake~covid$selfreport_handwash))
+```
+
+The correlation coefficient (0.279725), visualization and model reveal an unsurprisingly positive but surprisingly significant correlation. The p-value from the linear model summary shows high statistical significance. This means that there is a very-unlikely-to-be-random positive correlation between self-reported handwashing and assuming the British are shaking hands less. We can't infer causation; respondents aren't necessarily assuming good hygiene of the British *because* they have good hygiene themselves. But there does appear to be a tendency for Italians that are practicing handwashing to guess that British are wary of shaking hands. Maybe this is because those that are practicing handwashing are more clued into the news, or more attentive to those news sources that are advocating for higher precautions - or maybe they are just naively assuming that others are as cautious as they are. We don't know any more than the data we have. It's important to remember that this poll was conducted in March 2020, when COVID-19 was still exponentially rising and outbreaks were occurring for the first time in many new countries. Therefore, it is plausible that Italians, who suffered one of the worst early outbreaks, may have had markedly different opinions than the UK, for whom the worst was yet to come and the first-hand realities of the pandemic were still unknown. 

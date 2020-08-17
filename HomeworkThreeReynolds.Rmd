@@ -1,0 +1,79 @@
+---
+title: "Homework Three"
+author: "Nate Reynolds"
+date: "8/12/2020"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+```{r setup, include=FALSE}
+library(tidyverse)
+```
+
+## Loading Data
+
+Load dataset (Italy Covid Survey).
+
+```{r load}
+covid <- read.delim("covid-responses.tab", sep = "\t", header=T)
+```
+
+## Plotting the Data
+
+Before plotting the data, I create tables of the three variables I will be using to get a sense of the distribution of values in each- I will filter out certain values when plotting to declutter the graph (such as treatment groups "three" and "four", which only contain two cases each and don't make much sense in the context of the codebook - probably errors).
+
+```{r tables}
+table(covid$treatment)
+table(covid$Q23)
+table(covid$gender)
+```
+
+Plot the data in a bar plot, filtering and renaming variables first. 
+
+```{r plot}
+covid %>%
+  mutate(reaction = case_when( #first, recode Q23 into a numeric variable so it can be read on the x axis of the plot
+    Q23 == "The reaction is much too extreme" ~ 1, #use text from the tables above to get value names right
+    Q23 == "The reaction is somewhat too extreme" ~ 2,
+    Q23 == "The reaction is appropriate" ~ 3,
+    Q23 == "The reaction is somewhat insufficient" ~ 4,
+    Q23 == "The reaction is not at all sufficient" ~ 5,
+  )) %>%
+  filter(treatment != "") %>% #filter out insignificant variable values
+  filter(treatment != "three") %>%
+  filter(treatment != "four") %>%
+  mutate(treatment = case_when( #now that we only have three groups, recode them for aesthetic value
+    treatment == "control" ~ "Control Group",
+    treatment == "one" ~ "Treatment Group 1",
+    treatment == "two" ~ "Treatment Group 2",
+  )) %>%
+  filter(gender != "Other") %>% #the "Other" gender group only contains 15 cases; keep the graph to two bars
+  ggplot(aes(reaction, fill = gender)) + #fill bars based on gender
+  geom_bar(position = "dodge") + #have gender bars stand side by side, rather than stacked on top of each other
+  theme_gray() + #make it look nice
+  labs(title = "Assessment of UK Public Reaction to Coronavirus, by Gender", subtitle = "Treatment groups were prompted to recall the names of loved ones vulnerable to COVID-19", y = "Respondent Count", x = "Assessment of UK Reaction: 1 being too extreme, 5 being not at all sufficient") + #label axes thoroughly
+  facet_wrap(vars(treatment), scales = "free_x") #facet based on control/treatment groups
+```
+
+This visualization demonstrates the overall distribution of Italian respondents' perception of the UK public reaction to the coronavirus (as of March 18). This evidently skews toward perceiving their reaction to be insufficient. The next layer of the graph, the gender breakdown, shown by differently colored bars, demonstrates how this perception differed by gender. The most interesting takeaway from this graph is that, despite a general lean towards calling the UK reaction insufficient, more female respondents than male respondents called the reaction "somewhat insufficient" or "not at all sufficient", whereas male respondents were more likely to say "the reaction is appropriate" (value 3). The final layer of this graph is faceting by control/treatment group. Treatment groups were given differently styled prompts to name or think about close friends and family vulnerable to COVID-19. Evidently, this did not make much of an impact on respondents; the distribution of answers appears generally the same in each group, at least at this depth of analysis. There might be a small difference in that fewer female respondents  label the response "somewhat insufficient" in treatment groups than in the control group.
+
+After trying a handful of other approaches, I chose a barplot based on its simplicity. Although barplots are only to visualize one variable, I was able to incorporate a second variable, gender, through the fill option. I chose to facet the graph because I wanted to see if the treatment had any effect on respondents. Beyond that, I also wanted to separate the groups because they simply did not take the same survey and I wanted to isolate respondents into the survey that they answered. Diving these groups into different faceted plots seems like a smart way to do this; because respondents are literally taking differently worded surveys, this would not be a great variable to use as a fill option; the treatment variable describes the survey, not a respondent characteristic. 
+
+I tried a lot of other alternative approaches and different variables. I tried a few different ways of incorporating age into the graph, but the graphs never seemed very insightful; age had less of an effect on respondents than I assumed. Another variable I tried to incorporate was "SelfReported_Behavio_2", the level to which respondents "did not attend social gatherings". There were two reasons I chose not to include this: 1. most respondents either chose "0" or "100" (and other values were very scattered in between) so there were no clear trends to visualize 2. these questions were asked before the treatment prompts, so there conceivaly would be no effect of the treatment groups (which I wanted to investigate). 
+
+Below is a chart I tried at an early stage that plots age against not attending social gatherings. I think it showcases some of the flaws of these variables (not in their potential for analysis; they just make uninteresting visualizations). 
+
+```{r example}
+covid %>%
+  mutate(calculated_age = 2020 - age) %>% 
+  ggplot(aes(calculated_age, SelfReported_Behavio_2)) + 
+  geom_point() +
+  geom_smooth() +
+  theme_minimal() +
+  labs(title = "Covid")
+```
+
+I was able to find capability to everything I needed to do for my plot (the first one), however I was stuck for a while trying to find an interesting way to visualize the effect of respondents' self-reported behavior / not attending social gatherings in spite of the very polarized distribution of values (most people chose 0 or 100). This made any sort of trends hard to show.
+
+
